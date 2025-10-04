@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | ExpenseFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="logo">
+                <i class="fas fa-receipt logo-icon"></i>
+                <span>ExpenseFlow</span>
+            </div>
+            <h1>Create Your Company Account</h1>
+            <p>Set up your ExpenseFlow account in minutes</p>
+        </div>
+        
+        <div class="auth-card">
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form class="auth-form" method="POST">
+                <div class="form-group">
+                    <label for="signupCompany" class="form-label">Company Name *</label>
+                    <input type="text" id="signupCompany" name="company" class="form-control" placeholder="Enter your company name" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="signupCountry" class="form-label">Country *</label>
+                        <select id="signupCountry" name="country" class="form-control" required>
+                            <option value="">Select Country</option>
+                            <option value="United States">United States</option>
+                            <option value="India">India</option>
+                            <option value="United Kingdom">United Kingdom</option>
+                            <option value="Canada">Canada</option>
+                            <option value="Australia">Australia</option>
+                            <option value="Germany">Germany</option>
+                            <option value="France">France</option>
+                            <option value="Japan">Japan</option>
+                            <option value="Singapore">Singapore</option>
+                            <option value="UAE">United Arab Emirates</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signupCurrency" class="form-label">Base Currency *</label>
+                        <select id="signupCurrency" name="currency" class="form-control" required>
+                            <option value="">Select Currency</option>
+                            <option value="USD">USD - US Dollar ($)</option>
+                            <option value="EUR">EUR - Euro (€)</option>
+                            <option value="GBP">GBP - British Pound (£)</option>
+                            <option value="INR">INR - Indian Rupee (₹)</option>
+                            <option value="CAD">CAD - Canadian Dollar (C$)</option>
+                            <option value="AUD">AUD - Australian Dollar (A$)</option>
+                            <option value="JPY">JPY - Japanese Yen (¥)</option>
+                            <option value="CNY">CNY - Chinese Yuan (¥)</option>
+                            <option value="CHF">CHF - Swiss Franc</option>
+                            <option value="SGD">SGD - Singapore Dollar (S$)</option>
+                            <option value="AED">AED - UAE Dirham</option>
+                            <option value="SAR">SAR - Saudi Riyal</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="currency-info-box">
+                    <div class="info-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="info-content">
+                        <strong>Base Currency Information</strong>
+                        <p>This will be your company's default currency for reporting and analytics. Employees can still submit expenses in any currency.</p>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="signupUsername" class="form-label">Admin Username *</label>
+                    <input type="text" id="signupUsername" name="username" class="form-control" placeholder="Choose an admin username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="signupPassword" class="form-label">Password *</label>
+                    <input type="password" id="signupPassword" name="password" class="form-control" placeholder="Create a secure password" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-user-plus"></i> Create Company Account
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Already registered? <a href="/login" class="auth-link">Login here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-select currency based on country
+        document.getElementById('signupCountry').addEventListener('change', function() {
+            const country = this.value;
+            const currencySelect = document.getElementById('signupCurrency');
+            
+            // Default currency mapping
+            const countryCurrencies = {
+                'United States': 'USD',
+                'India': 'INR',
+                'United Kingdom': 'GBP',
+                'Canada': 'CAD',
+                'Australia': 'AUD',
+                'Germany': 'EUR',
+                'France': 'EUR',
+                'Japan': 'JPY',
+                'Singapore': 'SGD',
+                'UAE': 'AED'
+            };
+            
+            if (countryCurrencies[country]) {
+                currencySelect.value = countryCurrencies[country];
+            } else if (country === 'Other') {
+                currencySelect.value = 'USD'; // Default to USD for other countries
+            }
+        });
+
+    
+
+        
+    </script>
+</body>
+</html>

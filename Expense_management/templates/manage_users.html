@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users | ExpenseFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-receipt"></i>
+                    <span>ExpenseFlow</span>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar">A</div>
+                    <div>
+                        <div>Admin User</div>
+                        <div style="font-size: 12px; color: var(--gray);">Administrator</div>
+                    </div>
+                    <a href="/admin_dashboard" class="btn btn-outline">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                    <a href="/logout" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <h1>Manage Users</h1>
+                <p>Add and manage employees and managers in your organization</p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="form-and-table-container">
+                <!-- Add User Form -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h2>Add New User</h2>
+                        <div class="form-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                    </div>
+                    
+                    <form method="POST" class="auth-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" id="username" name="username" class="form-control" placeholder="Enter username" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="role" class="form-label">Role</label>
+                                <select id="role" name="role" class="form-control" required>
+                                    <option value="">Select Role</option>
+                                    <option value="Employee">Employee</option>
+                                    <option value="Manager">Manager</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="manager_id" class="form-label">Manager (Optional)</label>
+                                <select id="manager_id" name="manager_id" class="form-control">
+                                    <option value="">No Manager</option>
+                                    {% for m in managers %}
+                                        <option value="{{ m.id }}">{{ m.username }} (Manager)</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-user-plus"></i> Add User
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Existing Users Table -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h2>Existing Users ({{ users|length }})</h2>
+                        <div class="table-actions">
+                            <span class="user-count">{{ users|length }} users</span>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Manager</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for u in users %}
+                                <tr>
+                                    <td>{{ u.id }}</td>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="user-avatar-small">{{ u.username[0]|upper }}</div>
+                                            {{ u.username }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="role-badge {{ u.role|lower }}">
+                                            <i class="fas {% if u.role == 'Manager' %}fa-user-tie{% else %}fa-user{% endif %}"></i>
+                                            {{ u.role }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if u.manager_id %}
+                                            {% set manager_name = '' %}
+                                            {% for m in managers %}
+                                                {% if m.id == u.manager_id %}
+                                                    {% set manager_name = m.username %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            <span class="manager-tag">
+                                                <i class="fas fa-user-tie"></i>
+                                                {{ manager_name }}
+                                            </span>
+                                        {% else %}
+                                            <span class="no-manager">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn-icon" title="Edit User">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-icon btn-danger" title="Delete User">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

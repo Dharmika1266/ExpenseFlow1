@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Expense | ExpenseFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-receipt"></i>
+                    <span>ExpenseFlow</span>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar">E</div>
+                    <div>
+                        <div>Employee</div>
+                        <div style="font-size: 12px; color: var(--gray);">{{ session.username }}</div>
+                    </div>
+                    <a href="/employee_dashboard" class="btn btn-outline">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                    <a href="/logout" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <h1>Submit Expense</h1>
+                <p>Quickly submit your expenses with receipt scanning or manual entry</p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="expense-submission-container">
+                <!-- Quick Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-paper-plane"></i>
+                        </div>
+                        <div class="stat-info">
+                            {% set total_expenses = my_expenses|length %}
+                            <div class="stat-value">{{ total_expenses }}</div>
+                            <div class="stat-label">Total Expenses</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            {% set pending_expenses = my_expenses|selectattr("status", "equalto", "Pending")|list %}
+                            <div class="stat-value">{{ pending_expenses|length }}</div>
+                            <div class="stat-label">Pending Approval</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            {% set approved_expenses = my_expenses|selectattr("status", "equalto", "Approved")|list %}
+                            <div class="stat-value">{{ approved_expenses|length }}</div>
+                            <div class="stat-label">Approved</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-info">
+                            {% set total_amount = my_expenses|selectattr("status", "equalto", "Approved")|sum(attribute="amount") %}
+                            <div class="stat-value">${{ "%.2f"|format(total_amount|default(0)) }}</div>
+                            <div class="stat-label">Total Approved</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expense Submission Options -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h2>Submit New Expense</h2>
+                        <div class="submission-options">
+                            <button type="button" class="btn btn-outline active" id="manualBtn">
+                                <i class="fas fa-keyboard"></i> Manual Entry
+                            </button>
+                            <button type="button" class="btn btn-outline" id="scanBtn">
+                                <i class="fas fa-camera"></i> Scan Receipt
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Manual Entry Form -->
+                    <div id="manualForm" class="form-container">
+                        <form method="POST" class="expense-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="amount" class="form-label">Amount *</label>
+                                    <input type="number" step="0.01" id="amount" name="amount" class="form-control" placeholder="0.00" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="currency" class="form-label">Currency *</label>
+                                    <select id="currency" name="currency" class="form-control" required>
+                                        <option value="">Select Currency</option>
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                        <option value="INR">INR (₹)</option>
+                                        <option value="CAD">CAD (C$)</option>
+                                        <option value="AUD">AUD (A$)</option>
+                                        <option value="JPY">JPY (¥)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="category" class="form-label">Category *</label>
+                                    <select id="category" name="category" class="form-control" required>
+                                        <option value="">Select Category</option>
+                                        <option value="Travel">Travel</option>
+                                        <option value="Food">Food & Dining</option>
+                                        <option value="Accommodation">Accommodation</option>
+                                        <option value="Transportation">Transportation</option>
+                                        <option value="Office Supplies">Office Supplies</option>
+                                        <option value="Entertainment">Entertainment</option>
+                                        <option value="Utilities">Utilities</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="date" class="form-label">Date *</label>
+                                    <input type="date" id="date" name="date" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea id="description" name="description" class="form-control" placeholder="Brief description of the expense..." rows="3"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-paper-plane"></i> Submit Expense
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- OCR Scan Form -->
+                    <div id="scanForm" class="form-container" style="display: none;">
+                        <div class="scan-container">
+                            <div class="scan-placeholder">
+                                <i class="fas fa-camera"></i>
+                                <h3>Scan Receipt</h3>
+                                <p>Upload a receipt image to automatically extract expense details</p>
+                                
+                                <div class="upload-area" id="uploadArea">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Drag & drop receipt image or click to browse</p>
+                                    <input type="file" id="receiptUpload" accept="image/*" style="display: none;">
+                                    <button type="button" class="btn btn-outline" onclick="document.getElementById('receiptUpload').click()">
+                                        <i class="fas fa-folder-open"></i> Choose File
+                                    </button>
+                                </div>
+                                
+                                <div class="scan-preview" id="scanPreview" style="display: none;">
+                                    <img id="previewImage" src="" alt="Receipt preview">
+                                    <div class="scan-actions">
+                                        <button type="button" class="btn btn-success" id="processReceipt">
+                                            <i class="fas fa-magic"></i> Process Receipt
+                                        </button>
+                                        <button type="button" class="btn btn-outline" id="rescanReceipt">
+                                            <i class="fas fa-redo"></i> Rescan
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expense History -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h2>My Expense History</h2>
+                        <div class="filter-options">
+                            <select class="form-control" id="statusFilter">
+                                <option value="all">All Status</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table" id="expenseTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Currency</th>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for e in my_expenses %}
+                                <tr data-status="{{ e.status }}">
+                                    <td>{{ e.date }}</td>
+                                    <td class="amount-cell">${{ e.amount }}</td>
+                                    <td>
+                                        <span class="currency-badge">{{ e.currency }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="category-tag">{{ e.category }}</span>
+                                    </td>
+                                    <td>{{ e.description or '-' }}</td>
+                                    <td>
+                                        <span class="status-badge {{ e.status|lower }}">{{ e.status }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {% if not my_expenses %}
+                    <div class="empty-state">
+                        <i class="fas fa-receipt"></i>
+                        <h3>No Expenses Yet</h3>
+                        <p>Submit your first expense to get started</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set today's date as default
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+        });
+
+        // Toggle between manual and scan forms
+        document.getElementById('manualBtn').addEventListener('click', function() {
+            document.getElementById('manualForm').style.display = 'block';
+            document.getElementById('scanForm').style.display = 'none';
+            this.classList.add('active');
+            document.getElementById('scanBtn').classList.remove('active');
+        });
+
+        document.getElementById('scanBtn').addEventListener('click', function() {
+            document.getElementById('manualForm').style.display = 'none';
+            document.getElementById('scanForm').style.display = 'block';
+            this.classList.add('active');
+            document.getElementById('manualBtn').classList.remove('active');
+        });
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const receiptUpload = document.getElementById('receiptUpload');
+        const scanPreview = document.getElementById('scanPreview');
+        const previewImage = document.getElementById('previewImage');
+
+        uploadArea.addEventListener('click', () => receiptUpload.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.backgroundColor = 'var(--light)';
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.backgroundColor = '';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.backgroundColor = '';
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        receiptUpload.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImage.src = e.target.result;
+                    uploadArea.style.display = 'none';
+                    scanPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Please select an image file.');
+            }
+        }
+
+        // Process receipt button
+        document.getElementById('processReceipt').addEventListener('click', function() {
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            this.disabled = true;
+            
+            // Simulate OCR processing
+            setTimeout(() => {
+                // Auto-fill form with extracted data (simulated)
+                document.getElementById('amount').value = '45.50';
+                document.getElementById('currency').value = 'USD';
+                document.getElementById('category').value = 'Food';
+                document.getElementById('description').value = 'Lunch meeting with client';
+                
+                // Switch back to manual form with filled data
+                document.getElementById('manualForm').style.display = 'block';
+                document.getElementById('scanForm').style.display = 'none';
+                document.getElementById('manualBtn').classList.add('active');
+                document.getElementById('scanBtn').classList.remove('active');
+                
+                // Reset scan interface
+                uploadArea.style.display = 'block';
+                scanPreview.style.display = 'none';
+                receiptUpload.value = '';
+                this.innerHTML = '<i class="fas fa-magic"></i> Process Receipt';
+                this.disabled = false;
+                
+                alert('Receipt processed successfully! Details have been auto-filled.');
+            }, 2000);
+        });
+
+        // Rescan button
+        document.getElementById('rescanReceipt').addEventListener('click', function() {
+            uploadArea.style.display = 'block';
+            scanPreview.style.display = 'none';
+            receiptUpload.value = '';
+        });
+
+        // Status filter
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            const status = this.value;
+            const rows = document.querySelectorAll('#expenseTable tbody tr');
+            
+            rows.forEach(row => {
+                if (status === 'all' || row.getAttribute('data-status') === status) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

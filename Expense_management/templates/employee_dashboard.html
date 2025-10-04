@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard | ExpenseFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-receipt"></i>
+                    <span>ExpenseFlow</span>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar">E</div>
+                    <div>
+                        <div>Employee Dashboard</div>
+                        <div style="font-size: 12px; color: var(--gray);">{{ session.username }}</div>
+                    </div>
+                    <a href="/logout" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <h1>Welcome, {{ session.username }}!</h1>
+                <p>Manage your expenses and track reimbursements</p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Quick Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ my_expenses_count }}</div>
+                        <div class="stat-label">Total Expenses</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ pending_count }}</div>
+                        <div class="stat-label">Pending Approval</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        {% set approved_expenses = my_expenses|selectattr("status", "equalto", "Approved")|list %}
+                        <div class="stat-value">{{ approved_expenses|length }}</div>
+                        <div class="stat-label">Approved</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value">${{ "%.2f"|format(total_spent|default(0)) }}</div>
+                        <div class="stat-label">Total Approved</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>Quick Actions</h2>
+                </div>
+                <div class="action-grid">
+                    <a href="/submit_expense" class="action-card">
+                        <div class="action-icon primary">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <div class="action-content">
+                            <h3>Submit New Expense</h3>
+                            <p>Add a new expense claim with receipt</p>
+                        </div>
+                        <div class="action-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </a>
+                    
+                    <div class="action-card">
+                        <div class="action-icon success">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <div class="action-content">
+                            <h3>Expense History</h3>
+                            <p>View all your submitted expenses</p>
+                        </div>
+                        <div class="action-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="action-card">
+                        <div class="action-icon warning">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="action-content">
+                            <h3>Spending Analytics</h3>
+                            <p>View your expense patterns</p>
+                        </div>
+                        <div class="action-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="action-card">
+                        <div class="action-icon info">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <div class="action-content">
+                            <h3>Reimbursement Status</h3>
+                            <p>Track your payment status</p>
+                        </div>
+                        <div class="action-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Expenses -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>Recent Expenses</h2>
+                    <a href="/submit_expense" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> New Expense
+                    </a>
+                </div>
+                
+                {% if my_expenses %}
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Currency</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in my_expenses[:5] %}
+                            <tr>
+                                <td>{{ e.date }}</td>
+                                <td class="amount-cell">${{ e.amount }}</td>
+                                <td>
+                                    <span class="currency-badge">{{ e.currency }}</span>
+                                </td>
+                                <td>
+                                    <span class="category-tag">{{ e.category }}</span>
+                                </td>
+                                <td>{{ e.description or '-' }}</td>
+                                <td>
+                                    <span class="status-badge {{ e.status|lower }}">{{ e.status }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if my_expenses|length > 5 %}
+                <div class="view-all-container">
+                    <a href="/submit_expense" class="btn btn-outline">
+                        <i class="fas fa-list"></i> View All Expenses
+                    </a>
+                </div>
+                {% endif %}
+                
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-receipt"></i>
+                    <h3>No Expenses Yet</h3>
+                    <p>Submit your first expense to get started</p>
+                    <a href="/submit_expense" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Submit First Expense
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Expense Summary by Category -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>Expense Summary</h2>
+                    <span class="summary-period">This Month</span>
+                </div>
+                
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-label">Travel</div>
+                        <div class="summary-bar">
+                            <div class="summary-progress" style="width: 45%; background: var(--primary);"></div>
+                        </div>
+                        <div class="summary-amount">$450.00</div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <div class="summary-label">Food</div>
+                        <div class="summary-bar">
+                            <div class="summary-progress" style="width: 30%; background: var(--success);"></div>
+                        </div>
+                        <div class="summary-amount">$300.00</div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <div class="summary-label">Accommodation</div>
+                        <div class="summary-bar">
+                            <div class="summary-progress" style="width: 20%; background: #ff9f1c;"></div>
+                        </div>
+                        <div class="summary-amount">$200.00</div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <div class="summary-label">Other</div>
+                        <div class="summary-bar">
+                            <div class="summary-progress" style="width: 5%; background: var(--secondary);"></div>
+                        </div>
+                        <div class="summary-amount">$50.00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add hover effects to action cards
+            const actionCards = document.querySelectorAll('.action-card');
+            actionCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

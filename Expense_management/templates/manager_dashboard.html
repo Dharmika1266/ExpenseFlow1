@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard | ExpenseFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-receipt"></i>
+                    <span>ExpenseFlow</span>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar">M</div>
+                    <div>
+                        <div>Manager Dashboard</div>
+                        <div style="font-size: 12px; color: var(--gray);">{{ session.username }}</div>
+                    </div>
+                    <a href="/logout" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <h1>Manager Dashboard</h1>
+                <p>Review and approve team expenses with smart workflow rules</p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Quick Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ team_expenses }}</div>
+                        <div class="stat-label">Team Expenses</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ pending_approvals }}</div>
+                        <div class="stat-label">Pending Approval</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ approved_count }}</div>
+                        <div class="stat-label">Approved This Month</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ escalation_count }}</div>
+                        <div class="stat-label">Escalation Risk</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approval Workflow Section -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>Pending Approvals</h2>
+                    <div class="filter-options">
+                        <select class="form-control" id="approvalFilter">
+                            <option value="all">All Expenses</option>
+                            <option value="high">High Priority (>$1000)</option>
+                            <option value="policy">Policy Violations</option>
+                            <option value="urgent">Urgent (24h deadline)</option>
+                        </select>
+                    </div>
+                </div>
+
+                {% if team_expenses_list %}
+                <div class="approval-grid">
+                    {% for expense in team_expenses_list %}
+                    {% if expense.status == 'Pending' %}
+                    <div class="approval-card" data-amount="{{ expense.amount }}" data-category="{{ expense.category }}">
+                        <div class="approval-header">
+                            <div class="employee-info">
+                                <div class="user-avatar-small">{{ expense.username[0]|upper }}</div>
+                                <div>
+                                    <div class="employee-name">{{ expense.username }}</div>
+                                    <div class="expense-date">{{ expense.date }}</div>
+                                </div>
+                            </div>
+                            <div class="priority-badge {{ 'high' if expense.amount > 1000 else 'medium' }}">
+                                {% if expense.amount > 1000 %}High Priority{% else %}Standard{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="expense-details">
+                            <div class="amount-section">
+                                <div class="amount">{{ expense.amount }} {{ expense.currency }}</div>
+                                <div class="usd-equivalent">${{ expense.usd_amount if expense.usd_amount else expense.amount }} USD</div>
+                            </div>
+                            <div class="category-section">
+                                <span class="category-tag">{{ expense.category }}</span>
+                                {% if expense.amount > 500 and expense.category == 'Food' %}
+                                <span class="policy-flag" title="Policy Violation: Meal expense over $500">
+                                    <i class="fas fa-exclamation-triangle"></i> Policy Check
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="description">{{ expense.description or 'No description provided' }}</div>
+                        </div>
+
+                        <!-- AI Policy Check -->
+                        <div class="policy-alerts">
+                            {% if expense.amount > 1000 %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-arrow-up"></i> Requires Director approval (>$1000)
+                            </div>
+                            {% endif %}
+                            {% if expense.amount > 500 and expense.category == 'Food' %}
+                            <div class="alert alert-danger">
+                                <i class="fas fa-utensils"></i> Meal expense exceeds policy limit ($500)
+                            </div>
+                            {% endif %}
+                            {% if expense.amount > 2000 %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-crown"></i> CFO approval required (>$2000)
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Approval Actions -->
+                        <div class="approval-actions">
+                            <form method="POST" action="/update_expense_status/{{ expense.id }}" class="action-form">
+                                <input type="hidden" name="status" value="Approved">
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                            </form>
+                            
+                            <form method="POST" action="/update_expense_status/{{ expense.id }}" class="action-form">
+                                <input type="hidden" name="status" value="Rejected">
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </form>
+                            
+                            <button type="button" class="btn btn-outline btn-sm send-back-btn" data-expense-id="{{ expense.id }}">
+                                <i class="fas fa-comment"></i> Send Back
+                            </button>
+                            
+                            <button type="button" class="btn btn-info btn-sm details-btn" data-expense-id="{{ expense.id }}">
+                                <i class="fas fa-eye"></i> Details
+                            </button>
+                        </div>
+
+                        <!-- Escalation Timer -->
+                        <div class="escalation-timer">
+                            <i class="fas fa-clock"></i>
+                            <span>Auto-escalates in: <strong>24h</strong></span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-check-circle"></i>
+                    <h3>No Pending Approvals</h3>
+                    <p>All team expenses have been processed</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Approval Workflow Visualization -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>Approval Workflow</h2>
+                    <div class="workflow-info">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Smart multi-level approval process</span>
+                    </div>
+                </div>
+                
+                <div class="workflow-visual">
+                    <div class="workflow-step active">
+                        <div class="step-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="step-label">Manager Review</div>
+                        <div class="step-status">Current Step</div>
+                    </div>
+                    
+                    <div class="step-connector"></div>
+                    
+                    <div class="workflow-step {{ 'active' if has_high_amount else 'inactive' }}">
+                        <div class="step-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="step-label">Finance Team</div>
+                        <div class="step-status">> $1,000</div>
+                    </div>
+                    
+                    <div class="step-connector"></div>
+                    
+                    <div class="workflow-step {{ 'active' if has_very_high_amount else 'inactive' }}">
+                        <div class="step-icon">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="step-label">Director/CFO</div>
+                        <div class="step-status">> $2,000</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Expense Analytics -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>Team Analytics</h2>
+                    <div class="analytics-period">This Month</div>
+                </div>
+                
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <div class="analytics-value">${{ total_team_spending }}</div>
+                        <div class="analytics-label">Total Team Spending</div>
+                        <div class="analytics-trend up">+12% from last month</div>
+                    </div>
+                    
+                    <div class="analytics-card">
+                        <div class="analytics-value">{{ avg_approval_time }}h</div>
+                        <div class="analytics-label">Avg. Approval Time</div>
+                        <div class="analytics-trend down">-2h faster</div>
+                    </div>
+                    
+                    <div class="analytics-card">
+                        <div class="analytics-value">{{ approval_rate }}%</div>
+                        <div class="analytics-label">Approval Rate</div>
+                        <div class="analytics-trend up">+5% better</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comment Modal -->
+    <div id="commentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Send Back with Comments</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="commentForm" method="POST" action="/send_back_expense">
+                    <input type="hidden" id="expenseId" name="expense_id">
+                    <input type="hidden" name="status" value="Returned">
+                    <div class="form-group">
+                        <label for="commentText" class="form-label">Comments *</label>
+                        <textarea id="commentText" name="comments" class="form-control" placeholder="Provide feedback for the employee..." rows="4" required></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-outline" id="cancelComment">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Send Back</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Expense Details</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="expenseDetailsContent">
+                    <!-- Details will be loaded here -->
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" id="closeDetails">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Filter approvals
+        document.getElementById('approvalFilter').addEventListener('change', function() {
+            const filter = this.value;
+            const cards = document.querySelectorAll('.approval-card');
+            
+            cards.forEach(card => {
+                const amount = parseFloat(card.dataset.amount);
+                const category = card.dataset.category;
+                
+                let show = true;
+                
+                if (filter === 'high' && amount <= 1000) show = false;
+                if (filter === 'policy' && !(amount > 500 && category === 'Food')) show = false;
+                if (filter === 'urgent') {
+                    // Show only expenses approaching 24h deadline
+                    show = true; // Simplified for demo
+                }
+                
+                card.style.display = show ? 'block' : 'none';
+            });
+        });
+
+        // Event delegation for send back buttons
+        document.addEventListener('click', function(e) {
+            // Send Back button
+            if (e.target.classList.contains('send-back-btn') || e.target.closest('.send-back-btn')) {
+                const button = e.target.classList.contains('send-back-btn') ? e.target : e.target.closest('.send-back-btn');
+                const expenseId = button.getAttribute('data-expense-id');
+                openCommentModal(expenseId);
+            }
+            
+            // Details button
+            if (e.target.classList.contains('details-btn') || e.target.closest('.details-btn')) {
+                const button = e.target.classList.contains('details-btn') ? e.target : e.target.closest('.details-btn');
+                const expenseId = button.getAttribute('data-expense-id');
+                viewDetails(expenseId);
+            }
+        });
+
+        // Comment Modal
+        function openCommentModal(expenseId) {
+            console.log('Opening comment modal for expense:', expenseId);
+            document.getElementById('expenseId').value = expenseId;
+            document.getElementById('commentModal').style.display = 'block';
+        }
+
+        // View expense details
+        function viewDetails(expenseId) {
+            console.log('Viewing details for expense:', expenseId);
+            
+            // For demo purposes, we'll show static content
+            // In a real app, you would fetch this data from the server
+            const detailsContent = `
+                <div class="expense-detail-item">
+                    <strong>Expense ID:</strong> ${expenseId}
+                </div>
+                <div class="expense-detail-item">
+                    <strong>Employee:</strong> Team Member
+                </div>
+                <div class="expense-detail-item">
+                    <strong>Amount:</strong> $500.00 USD
+                </div>
+                <div class="expense-detail-item">
+                    <strong>Category:</strong> Travel
+                </div>
+                <div class="expense-detail-item">
+                    <strong>Submitted:</strong> ${new Date().toLocaleDateString()}
+                </div>
+                <div class="expense-detail-item">
+                    <strong>Status:</strong> Pending Approval
+                </div>
+                <div class="expense-detail-item">
+                    <strong>Description:</strong> Client meeting travel expenses
+                </div>
+            `;
+            
+            document.getElementById('expenseDetailsContent').innerHTML = detailsContent;
+            document.getElementById('detailsModal').style.display = 'block';
+        }
+
+        // Modal close functionality
+        document.querySelectorAll('.close').forEach(closeBtn => {
+            closeBtn.addEventListener('click', function() {
+                this.closest('.modal').style.display = 'none';
+            });
+        });
+
+        document.getElementById('cancelComment').addEventListener('click', function() {
+            document.getElementById('commentModal').style.display = 'none';
+        });
+
+        document.getElementById('closeDetails').addEventListener('click', function() {
+            document.getElementById('detailsModal').style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+
+        // Auto-refresh every 30 seconds for new approvals
+        setInterval(() => {
+            console.log('Checking for new approvals...');
+            // In a real app, this would check for new expenses via AJAX
+        }, 30000);
+    </script>
+</body>
+</html>
