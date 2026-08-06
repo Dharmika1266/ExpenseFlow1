@@ -3,9 +3,32 @@ import mysql.connector
 from datetime import date, datetime
 import requests
 from typing import Optional
+import os
+from werkzeug.utils import secure_filename
+
+# Import bill extractor
+try:
+    from bill_extractor import BillExtractorAI
+    BILL_SCANNER_AVAILABLE = True
+    print("✅ Bill scanner loaded successfully!")
+except ImportError as e:
+    BILL_SCANNER_AVAILABLE = False
+    print(f"⚠️ Warning: Bill scanner not available. Error: {str(e)}")
+    print("Install required packages: pip install google-generativeai pillow")
+except Exception as e:
+    BILL_SCANNER_AVAILABLE = False
+    print(f"❌ Error loading bill scanner: {str(e)}")
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
+
+# Upload configuration
+UPLOAD_FOLDER = 'static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Create upload folder if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ✅ MySQL Database Connection
 db = mysql.connector.connect(
@@ -146,10 +169,22 @@ def manage_users():
         if manager_id == "":
             manager_id = None
 
+        # Check if username already exists in the same company
+        cursor.execute("SELECT id FROM users WHERE username=%s AND company_id=%s", (username, company_id))
+        existing_user = cursor.fetchone()
+        
+        if existing_user:
+            flash(f"Username '{username}' already exists in your organization. Please choose a different username.", "danger")
+            cursor.execute("SELECT * FROM users WHERE company_id=%s", (company_id,))
+            users = cursor.fetchall()
+            cursor.execute("SELECT id, username FROM users WHERE company_id=%s AND role='Manager'", (company_id,))
+            managers = cursor.fetchall()
+            return render_template('manage_users.html', users=users, managers=managers)
+
         cursor.execute("INSERT INTO users (username, password, role, company_id, manager_id) VALUES (%s, %s, %s, %s, %s)",
                        (username, password, role, company_id, manager_id))
         db.commit()
-        flash(f"{role} created successfully!", "success")
+        flash(f"{role} '{username}' created successfully!", "success")
         return redirect('/manage_users')
 
     cursor.execute("SELECT * FROM users WHERE company_id=%s", (company_id,))
@@ -159,6 +194,256 @@ def manage_users():
     managers = cursor.fetchall()
 
     return render_template('manage_users.html', users=users, managers=managers)
+
+# -------------------------
+# Update User (Edit)
+# -------------------------
+@app.route('/update_user/<int:user_id>', methods=['POST'])
+def update_user(user_id):
+    if 'user_id' not in session or session['role'] != "Admin":
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        role = data.get('role')
+        manager_id = data.get('manager_id')
+
+        if not username or not role:
+            return jsonify({'success': False, 'message': 'Username and role are required'}), 400
+
+        # Check if user exists
+        cursor.execute("SELECT * FROM users WHERE id=%s AND company_id=%s", (user_id, session['company_id']))
+        user = cursor.fetchone()
+        
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        # Prepare update query
+        if password:
+            # Update with new password
+            cursor.execute("""
+                UPDATE users 
+                SET username=%s, password=%s, role=%s, manager_id=%s 
+                WHERE id=%s AND company_id=%s
+            """, (username, password, role, manager_id if manager_id else None, user_id, session['company_id']))
+        else:
+            # Update without changing password
+            cursor.execute("""
+                UPDATE users 
+                SET username=%s, role=%s, manager_id=%s 
+                WHERE id=%s AND company_id=%s
+            """, (username, role, manager_id if manager_id else None, user_id, session['company_id']))
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'User "{username}" updated successfully!',
+            'user': {
+                'id': user_id,
+                'username': username,
+                'role': role,
+                'manager_id': manager_id
+            }
+        }), 200
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# -------------------------
+# Delete User
+# -------------------------
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    if 'user_id' not in session or session['role'] != "Admin":
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    try:
+        # Don't allow admin to delete themselves
+        if user_id == session['user_id']:
+            return jsonify({'success': False, 'message': 'You cannot delete your own account'}), 400
+
+        # Check if user exists in the same company
+        cursor.execute("SELECT username FROM users WHERE id=%s AND company_id=%s", (user_id, session['company_id']))
+        user = cursor.fetchone()
+        
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        username = user['username']
+
+        # Check if this user is a manager with employees
+        cursor.execute("""
+            SELECT id, username, role 
+            FROM users 
+            WHERE manager_id=%s AND company_id=%s
+        """, (user_id, session['company_id']))
+        employees = cursor.fetchall()
+        
+        if employees:
+            # Get list of available managers (exclude the one being deleted)
+            cursor.execute("""
+                SELECT id, username, role 
+                FROM users 
+                WHERE company_id=%s AND id!=%s AND role IN ('Manager', 'Admin')
+            """, (session['company_id'], user_id))
+            available_managers = cursor.fetchall()
+            
+            return jsonify({
+                'success': False,
+                'requiresReassignment': True,
+                'employees': [{'id': e['id'], 'username': e['username'], 'role': e['role']} for e in employees],
+                'availableManagers': [{'id': m['id'], 'username': m['username'], 'role': m['role']} for m in available_managers],
+                'message': f'{username} is managing {len(employees)} employee(s). Please assign them to a new manager before deletion.'
+            }), 200
+
+        # No employees - proceed with deletion
+        # Step 1: Delete from escalation_queue (references expenses)
+        cursor.execute("""
+            DELETE FROM escalation_queue 
+            WHERE expense_id IN (SELECT id FROM expenses WHERE user_id=%s)
+        """, (user_id,))
+        
+        # Step 2: Delete from approval_logs where this user is the manager
+        cursor.execute("DELETE FROM approval_logs WHERE manager_id=%s", (user_id,))
+        
+        # Step 3: Delete from approval_logs for this user's expenses
+        cursor.execute("""
+            DELETE FROM approval_logs 
+            WHERE expense_id IN (SELECT id FROM expenses WHERE user_id=%s)
+        """, (user_id,))
+        
+        # Step 4: Delete all expenses submitted by this user
+        cursor.execute("DELETE FROM expenses WHERE user_id=%s", (user_id,))
+        
+        # Step 5: Update any employees who report to this user (set manager to NULL)
+        cursor.execute("UPDATE users SET manager_id=NULL WHERE manager_id=%s", (user_id,))
+        
+        # Step 6: Finally, delete the user
+        cursor.execute("DELETE FROM users WHERE id=%s AND company_id=%s", (user_id, session['company_id']))
+        db.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'User "{username}" and their expenses deleted successfully!'
+        }), 200
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# -------------------------
+# Reassign Employees and Delete Manager
+# -------------------------
+@app.route('/reassign_and_delete/<int:user_id>', methods=['POST'])
+def reassign_and_delete(user_id):
+    if 'user_id' not in session or session['role'] != "Admin":
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    try:
+        data = request.get_json()
+        new_manager_id = data.get('new_manager_id')
+        
+        if not new_manager_id:
+            return jsonify({'success': False, 'message': 'New manager ID is required'}), 400
+
+        # Verify the new manager exists and is in the same company
+        cursor.execute("""
+            SELECT username, role FROM users 
+            WHERE id=%s AND company_id=%s AND role IN ('Manager', 'Admin')
+        """, (new_manager_id, session['company_id']))
+        new_manager = cursor.fetchone()
+        
+        if not new_manager:
+            return jsonify({'success': False, 'message': 'Invalid manager selected'}), 400
+
+        # Get the user to be deleted
+        cursor.execute("SELECT username FROM users WHERE id=%s AND company_id=%s", (user_id, session['company_id']))
+        user = cursor.fetchone()
+        
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        username = user['username']
+
+        # Step 1: Reassign all employees to the new manager
+        cursor.execute("""
+            UPDATE users 
+            SET manager_id=%s 
+            WHERE manager_id=%s AND company_id=%s
+        """, (new_manager_id, user_id, session['company_id']))
+        
+        affected_employees = cursor.rowcount
+
+        # Step 2: Delete from escalation_queue
+        cursor.execute("""
+            DELETE FROM escalation_queue 
+            WHERE expense_id IN (SELECT id FROM expenses WHERE user_id=%s)
+        """, (user_id,))
+        
+        # Step 3: Delete from approval_logs where this user is the manager
+        cursor.execute("DELETE FROM approval_logs WHERE manager_id=%s", (user_id,))
+        
+        # Step 4: Delete from approval_logs for this user's expenses
+        cursor.execute("""
+            DELETE FROM approval_logs 
+            WHERE expense_id IN (SELECT id FROM expenses WHERE user_id=%s)
+        """, (user_id,))
+        
+        # Step 5: Delete all expenses submitted by this user
+        cursor.execute("DELETE FROM expenses WHERE user_id=%s", (user_id,))
+        
+        # Step 6: Finally, delete the user
+        cursor.execute("DELETE FROM users WHERE id=%s AND company_id=%s", (user_id, session['company_id']))
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully reassigned {affected_employees} employee(s) to {new_manager["username"]} and deleted user "{username}"!'
+        }), 200
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# -------------------------
+# Get User Details (for viewing)
+# -------------------------
+@app.route('/get_user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    if 'user_id' not in session or session['role'] != "Admin":
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    try:
+        cursor.execute("""
+            SELECT u.id, u.username, u.role, u.manager_id, m.username as manager_name
+            FROM users u
+            LEFT JOIN users m ON u.manager_id = m.id
+            WHERE u.id=%s AND u.company_id=%s
+        """, (user_id, session['company_id']))
+        
+        user = cursor.fetchone()
+        
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'user': {
+                'id': user['id'],
+                'username': user['username'],
+                'role': user['role'],
+                'manager_id': user['manager_id'],
+                'manager_name': user['manager_name'] if user['manager_name'] else 'No Manager',
+                'email': f"{user['username']}@company.com"
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 # -------------------------
 # Employee Dashboard
@@ -256,6 +541,88 @@ def load_currencies():
         }
 
 # -------------------------
+# Scan Receipt Image (AI-powered)
+# -------------------------
+@app.route('/scan_receipt', methods=['POST'])
+def scan_receipt():
+    print("🔍 Scan receipt route called!")
+    print(f"📊 BILL_SCANNER_AVAILABLE: {BILL_SCANNER_AVAILABLE}")
+    
+    if 'user_id' not in session:
+        print("❌ Unauthorized - No user in session")
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    if not BILL_SCANNER_AVAILABLE:
+        print("❌ Bill scanner not available")
+        return jsonify({'success': False, 'message': 'Bill scanner not available. Install: pip install google-generativeai pillow'}), 500
+    
+    try:
+        print(f"📁 Files in request: {list(request.files.keys())}")
+        
+        if 'receipt' not in request.files:
+            print("❌ No 'receipt' field in files")
+            return jsonify({'success': False, 'message': 'No file uploaded'}), 400
+        
+        file = request.files['receipt']
+        print(f"📄 File received: {file.filename}")
+        
+        if file.filename == '':
+            print("❌ Empty filename")
+            return jsonify({'success': False, 'message': 'No file selected'}), 400
+        
+        if not file:
+            print("❌ Invalid file object")
+            return jsonify({'success': False, 'message': 'Invalid file'}), 400
+            
+        # Save file temporarily
+        filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"scan_{timestamp}_{filename}"
+        
+        # Ensure the upload folder exists
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        print(f"💾 Receipt saved to: {filepath}")
+        print(f"📏 File size: {os.path.getsize(filepath)} bytes")
+        
+        # Extract bill details using AI
+        try:
+            print("🤖 Initializing BillExtractorAI...")
+            extractor = BillExtractorAI()
+            
+            print("🔬 Starting extraction...")
+            bill_data = extractor.extract_bill_details(filepath)
+            
+            print(f"✅ Extracted data: {bill_data}")
+            
+            # Clean up temporary file (optional)
+            # os.remove(filepath)
+            
+            return jsonify({
+                'success': True,
+                'data': bill_data,
+                'message': 'Receipt scanned successfully!'
+            }), 200
+            
+        except ImportError as ie:
+            print(f"❌ Import error: {str(ie)}")
+            return jsonify({'success': False, 'message': f'Missing library: {str(ie)}'}), 500
+        except Exception as extract_error:
+            print(f"❌ Extraction error: {str(extract_error)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'success': False, 'message': f'AI extraction failed: {str(extract_error)}'}), 500
+            
+    except Exception as e:
+        print(f"❌ Scan receipt error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+# -------------------------
 # Expense Submission (Employee) with Currency Conversion
 # -------------------------
 @app.route('/submit_expense', methods=['GET', 'POST'])
@@ -290,12 +657,24 @@ def submit_expense():
         flash(f"Expense submitted successfully! (${usd_amount:.2f} USD)", "success")
         return redirect('/submit_expense')
 
+    # Get user expenses
     cursor.execute("SELECT * FROM expenses WHERE user_id=%s ORDER BY date DESC", (session['user_id'],))
     my_expenses = cursor.fetchall()
+    
+    # Get user stats for this month
+    cursor.execute("""
+        SELECT 
+            COUNT(*) as expense_count,
+            COALESCE(SUM(amount), 0) as total_amount
+        FROM expenses 
+        WHERE user_id=%s AND MONTH(date) = MONTH(CURRENT_DATE()) AND YEAR(date) = YEAR(CURRENT_DATE())
+    """, (session['user_id'],))
+    user_stats = cursor.fetchone()
 
     return render_template('submit_expense.html', 
                          my_expenses=my_expenses, 
                          currencies=currencies,
+                         user_stats=user_stats,
                          username=session.get('username', 'Employee'))
 
 # -------------------------
@@ -517,6 +896,145 @@ def send_back_expense():
 
 # -------------------------
 # Logout
+# -------------------------
+# Get Expense Details API (Manager)
+# -------------------------
+@app.route('/get_expense_details/<int:expense_id>')
+def get_expense_details(expense_id):
+    if 'user_id' not in session or session['role'] != "Manager":
+        return {"error": "Unauthorized"}, 403
+    
+    try:
+        cursor.execute("""
+            SELECT e.*, u.username 
+            FROM expenses e 
+            JOIN users u ON e.user_id = u.id 
+            WHERE e.id = %s AND u.manager_id = %s
+        """, (expense_id, session['user_id']))
+        
+        expense = cursor.fetchone()
+        if expense:
+            return {
+                "id": expense['id'],
+                "username": expense['username'],
+                "amount": float(expense['amount']),
+                "currency": expense['currency'],
+                "category": expense['category'],
+                "description": expense['description'],
+                "date": expense['date'].isoformat() if expense['date'] else None,
+                "status": expense['status']
+            }
+        else:
+            return {"error": "Expense not found"}, 404
+    except Exception as e:
+        return {"error": str(e)}, 500
+
+# -------------------------
+# Admin Expense Actions
+# -------------------------
+@app.route('/approve_expense', methods=['POST'])
+def approve_expense():
+    if 'user_id' not in session or session.get('role') not in ['Admin', 'Manager']:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        data = request.get_json()
+        expense_id = data.get('expense_id')
+        
+        if not expense_id:
+            return jsonify({"success": False, "message": "Expense ID required"}), 400
+        
+        # Check if expense exists
+        cursor.execute("SELECT * FROM expenses WHERE id = %s", (expense_id,))
+        expense = cursor.fetchone()
+        
+        if not expense:
+            return jsonify({"success": False, "message": "Expense not found"}), 404
+        
+        # Update expense status
+        cursor.execute("""
+            UPDATE expenses 
+            SET status = 'Approved' 
+            WHERE id = %s
+        """, (expense_id,))
+        db.commit()
+        
+        return jsonify({"success": True, "message": "Expense approved successfully"})
+    
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/reject_expense', methods=['POST'])
+def reject_expense():
+    if 'user_id' not in session or session.get('role') not in ['Admin', 'Manager']:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        data = request.get_json()
+        expense_id = data.get('expense_id')
+        reason = data.get('reason', 'No reason provided')
+        
+        if not expense_id:
+            return jsonify({"success": False, "message": "Expense ID required"}), 400
+        
+        # Check if expense exists
+        cursor.execute("SELECT * FROM expenses WHERE id = %s", (expense_id,))
+        expense = cursor.fetchone()
+        
+        if not expense:
+            return jsonify({"success": False, "message": "Expense not found"}), 404
+        
+        # Update expense status
+        cursor.execute("""
+            UPDATE expenses 
+            SET status = 'Rejected' 
+            WHERE id = %s
+        """, (expense_id,))
+        db.commit()
+        
+        return jsonify({"success": True, "message": f"Expense rejected: {reason}"})
+    
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/get_expense/<int:expense_id>')
+def get_expense(expense_id):
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        cursor.execute("""
+            SELECT e.*, u.username 
+            FROM expenses e 
+            JOIN users u ON e.user_id = u.id 
+            WHERE e.id = %s
+        """, (expense_id,))
+        
+        expense = cursor.fetchone()
+        
+        if not expense:
+            return jsonify({"success": False, "message": "Expense not found"}), 404
+        
+        return jsonify({
+            "success": True,
+            "expense": {
+                "id": expense['id'],
+                "username": expense['username'],
+                "amount": float(expense['amount']),
+                "currency": expense['currency'],
+                "category": expense['category'],
+                "description": expense['description'],
+                "date": expense['date'].isoformat() if expense['date'] else None,
+                "status": expense['status'],
+                "vendor_name": expense.get('vendor_name', 'N/A')
+            }
+        })
+    
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
 # -------------------------
 @app.route('/logout')
 def logout():

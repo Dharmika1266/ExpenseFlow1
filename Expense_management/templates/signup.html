@@ -2,109 +2,304 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="Create your ExpenseFlow account - Smart expense management for modern teams">
+    <meta name="theme-color" content="#1e40af">
     <title>Sign Up | ExpenseFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-    <div class="auth-container">
-        <div class="auth-header">
-            <div class="logo">
-                <i class="fas fa-receipt logo-icon"></i>
-                <span>ExpenseFlow</span>
-            </div>
-            <h1>Create Your Company Account</h1>
-            <p>Set up your ExpenseFlow account in minutes</p>
-        </div>
-        
-        <div class="auth-card">
-            <!-- Flash messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <form class="auth-form" method="POST">
-                <div class="form-group">
-                    <label for="signupCompany" class="form-label">Company Name *</label>
-                    <input type="text" id="signupCompany" name="company" class="form-control" placeholder="Enter your company name" required>
+<body class="auth-body">
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Modern Split Layout -->
+    <div class="auth-split-container">
+        <!-- Left Side - Branding -->
+        <div class="auth-brand-side" role="complementary" aria-label="Brand information">
+            <div class="brand-content">
+                <div class="brand-logo">
+                    <div class="logo-icon-large">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <h1 class="brand-title">ExpenseFlow</h1>
+                    <p class="brand-subtitle">Join thousands of companies managing expenses smarter</p>
                 </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="signupCountry" class="form-label">Country *</label>
-                        <select id="signupCountry" name="country" class="form-control" required>
-                            <option value="">Select Country</option>
-                            <option value="United States">United States</option>
-                            <option value="India">India</option>
-                            <option value="United Kingdom">United Kingdom</option>
-                            <option value="Canada">Canada</option>
-                            <option value="Australia">Australia</option>
-                            <option value="Germany">Germany</option>
-                            <option value="France">France</option>
-                            <option value="Japan">Japan</option>
-                            <option value="Singapore">Singapore</option>
-                            <option value="UAE">United Arab Emirates</option>
-                            <option value="Other">Other</option>
-                        </select>
+                
+                <div class="feature-highlights">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <div class="feature-text">
+                            <h3>Quick Setup</h3>
+                            <p>Get started in minutes with our easy onboarding process</p>
+                        </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="signupCurrency" class="form-label">Base Currency *</label>
-                        <select id="signupCurrency" name="currency" class="form-control" required>
-                            <option value="">Select Currency</option>
-                            <option value="USD">USD - US Dollar ($)</option>
-                            <option value="EUR">EUR - Euro (€)</option>
-                            <option value="GBP">GBP - British Pound (£)</option>
-                            <option value="INR">INR - Indian Rupee (₹)</option>
-                            <option value="CAD">CAD - Canadian Dollar (C$)</option>
-                            <option value="AUD">AUD - Australian Dollar (A$)</option>
-                            <option value="JPY">JPY - Japanese Yen (¥)</option>
-                            <option value="CNY">CNY - Chinese Yuan (¥)</option>
-                            <option value="CHF">CHF - Swiss Franc</option>
-                            <option value="SGD">SGD - Singapore Dollar (S$)</option>
-                            <option value="AED">AED - UAE Dirham</option>
-                            <option value="SAR">SAR - Saudi Riyal</option>
-                        </select>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="feature-text">
+                            <h3>Team Collaboration</h3>
+                            <p>Add unlimited employees and managers to your account</p>
+                        </div>
                     </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <div class="feature-text">
+                            <h3>Multi-Currency Support</h3>
+                            <p>Handle expenses in any currency with automatic conversion</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-banner">
+                    <div class="stat-item">
+                        <div class="stat-value">10K+</div>
+                        <div class="stat-label">Companies</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">50K+</div>
+                        <div class="stat-label">Active Users</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">99.9%</div>
+                        <div class="stat-label">Uptime</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Signup Form -->
+        <div class="auth-form-side" role="main" id="main-content">
+            <div class="auth-form-container">
+                <div class="auth-form-header">
+                    <h2>Create Your Account</h2>
+                    <p>Set up your company account and start managing expenses efficiently</p>
+                </div>
                 </div>
 
-                <div class="currency-info-box">
-                    <div class="info-icon">
-                        <i class="fas fa-info-circle"></i>
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-messages-container">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">
+                                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                                    <span>{{ message }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <form class="modern-auth-form" method="POST" novalidate>
+                    <!-- Company Details Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-building"></i>
+                            Company Information
+                        </h3>
+                        
+                        <div class="form-group">
+                            <label for="signupCompany" class="form-label">
+                                <i class="fas fa-building"></i>
+                                Company Name <span class="required">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="signupCompany" 
+                                   name="company" 
+                                   class="form-control" 
+                                   placeholder="Enter your company name" 
+                                   required 
+                                   autocomplete="organization">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="signupCountry" class="form-label">
+                                    <i class="fas fa-globe"></i>
+                                    Country <span class="required">*</span>
+                                </label>
+                                <select id="signupCountry" name="country" class="form-control form-select" required>
+                                    <option value="">Select Country</option>
+                                    <option value="United States">🇺🇸 United States</option>
+                                    <option value="India">🇮🇳 India</option>
+                                    <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                                    <option value="Canada">🇨🇦 Canada</option>
+                                    <option value="Australia">🇦🇺 Australia</option>
+                                    <option value="Germany">🇩🇪 Germany</option>
+                                    <option value="France">🇫🇷 France</option>
+                                    <option value="Japan">🇯🇵 Japan</option>
+                                    <option value="Singapore">🇸🇬 Singapore</option>
+                                    <option value="UAE">🇦🇪 United Arab Emirates</option>
+                                    <option value="Other">🌍 Other</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="signupCurrency" class="form-label">
+                                    <i class="fas fa-dollar-sign"></i>
+                                    Base Currency <span class="required">*</span>
+                                </label>
+                                <select id="signupCurrency" name="currency" class="form-control form-select" required>
+                                    <option value="">Select Currency</option>
+                                    <option value="USD">💵 USD - US Dollar</option>
+                                    <option value="EUR">💶 EUR - Euro</option>
+                                    <option value="GBP">💷 GBP - British Pound</option>
+                                    <option value="INR">🇮🇳 INR - Indian Rupee</option>
+                                    <option value="CAD">🇨🇦 CAD - Canadian Dollar</option>
+                                    <option value="AUD">🇦🇺 AUD - Australian Dollar</option>
+                                    <option value="JPY">💴 JPY - Japanese Yen</option>
+                                    <option value="CNY">🇨🇳 CNY - Chinese Yuan</option>
+                                    <option value="CHF">🇨🇭 CHF - Swiss Franc</option>
+                                    <option value="SGD">🇸🇬 SGD - Singapore Dollar</option>
+                                    <option value="AED">🇦🇪 AED - UAE Dirham</option>
+                                    <option value="SAR">🇸🇦 SAR - Saudi Riyal</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="info-banner">
+                            <div class="info-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="info-content">
+                                <strong>About Base Currency</strong>
+                                <p>This will be your default currency for reporting. Employees can submit expenses in any currency with automatic conversion.</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="info-content">
-                        <strong>Base Currency Information</strong>
-                        <p>This will be your company's default currency for reporting and analytics. Employees can still submit expenses in any currency.</p>
+
+                    <!-- Admin Account Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-user-shield"></i>
+                            Admin Account Details
+                        </h3>
+                        
+                        <div class="form-group">
+                            <label for="signupUsername" class="form-label">
+                                <i class="fas fa-user"></i>
+                                Admin Username <span class="required">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="signupUsername" 
+                                   name="username" 
+                                   class="form-control" 
+                                   placeholder="Choose an admin username" 
+                                   required 
+                                   autocomplete="username">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="signupPassword" class="form-label">
+                                <i class="fas fa-lock"></i>
+                                Password <span class="required">*</span>
+                            </label>
+                            <div class="password-input-wrapper">
+                                <input type="password" 
+                                       id="signupPassword" 
+                                       name="password" 
+                                       class="form-control" 
+                                       placeholder="Create a secure password" 
+                                       required 
+                                       minlength="6"
+                                       autocomplete="new-password">
+                                <button type="button" 
+                                        class="password-toggle" 
+                                        onclick="togglePasswordVisibility('signupPassword')"
+                                        aria-label="Toggle password visibility">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="password-strength" id="passwordStrength">
+                                <div class="strength-bar">
+                                    <div class="strength-fill"></div>
+                                </div>
+                                <span class="strength-text">Password strength</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="signupUsername" class="form-label">Admin Username *</label>
-                    <input type="text" id="signupUsername" name="username" class="form-control" placeholder="Choose an admin username" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="signupPassword" class="form-label">Password *</label>
-                    <input type="password" id="signupPassword" name="password" class="form-control" placeholder="Create a secure password" required>
-                </div>
-                
-                <button type="submit" class="btn btn-primary btn-block">
-                    <i class="fas fa-user-plus"></i> Create Company Account
-                </button>
-            </form>
-            
-            <div class="auth-footer">
-                <p>Already registered? <a href="/login" class="auth-link">Login here</a></p>
+                    
+                    <button type="submit" class="btn btn-primary btn-block btn-lg">
+                        <i class="fas fa-rocket"></i>
+                        Create Company Account
+                    </button>
+                    
+                    <div class="form-divider">
+                        <span>or</span>
+                    </div>
+                    
+                    <div class="auth-footer">
+                        <p>Already have an account? <a href="/login" class="auth-link">Sign in here</a></p>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     <script>
+        // Password visibility toggle
+        function togglePasswordVisibility(fieldId) {
+            const field = document.getElementById(fieldId);
+            const button = event.currentTarget;
+            const icon = button.querySelector('i');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Password strength checker
+        document.getElementById('signupPassword').addEventListener('input', function() {
+            const password = this.value;
+            const strengthContainer = document.getElementById('passwordStrength');
+            const strengthFill = strengthContainer.querySelector('.strength-fill');
+            const strengthText = strengthContainer.querySelector('.strength-text');
+            
+            let strength = 0;
+            let strengthLabel = '';
+            let strengthColor = '';
+            
+            if (password.length >= 6) strength += 25;
+            if (password.length >= 10) strength += 25;
+            if (/[A-Z]/.test(password)) strength += 15;
+            if (/[a-z]/.test(password)) strength += 10;
+            if (/[0-9]/.test(password)) strength += 15;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 10;
+            
+            if (strength < 40) {
+                strengthLabel = 'Weak';
+                strengthColor = '#ef4444';
+            } else if (strength < 70) {
+                strengthLabel = 'Medium';
+                strengthColor = '#f59e0b';
+            } else {
+                strengthLabel = 'Strong';
+                strengthColor = '#10b981';
+            }
+            
+            strengthFill.style.width = strength + '%';
+            strengthFill.style.background = strengthColor;
+            strengthText.textContent = password.length > 0 ? strengthLabel : 'Password strength';
+            strengthText.style.color = strengthColor;
+        });
+
         // Auto-select currency based on country
         document.getElementById('signupCountry').addEventListener('change', function() {
             const country = this.value;
@@ -131,9 +326,16 @@
             }
         });
 
-    
-
-        
+        // Form validation
+        document.querySelector('.modern-auth-form').addEventListener('submit', function(e) {
+            const password = document.getElementById('signupPassword').value;
+            
+            if (password.length < 6) {
+                e.preventDefault();
+                alert('Password must be at least 6 characters long');
+                return false;
+            }
+        });
     </script>
 </body>
 </html>

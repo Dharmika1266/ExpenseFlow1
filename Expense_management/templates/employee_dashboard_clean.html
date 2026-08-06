@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard | ExpenseFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-container">
+        <!-- Mobile Overlay -->
+        <div class="mobile-overlay" id="mobileOverlay"></div>
+
+        <!-- Modern Sidebar Navigation -->
+        <nav class="modern-sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <span class="logo-text">ExpenseFlow</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        
+        <div class="sidebar-menu">
+            <div class="menu-section">
+                <span class="menu-title">MAIN</span>
+                <ul class="menu-items">
+                    <li class="menu-item active">
+                        <a href="#" class="menu-link">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="/submit_expense" class="menu-link">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>New Expense</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link">
+                            <i class="fas fa-history"></i>
+                            <span>My Expenses</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="menu-section">
+                <span class="menu-title">ACCOUNT</span>
+                <ul class="menu-items">
+                    <li class="menu-item">
+                        <a href="#" class="menu-link">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Help</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="profile-avatar">
+                    <span>{{ session.username[0].upper() }}</span>
+                </div>
+                <div class="profile-info">
+                    <div class="profile-name">{{ session.username }}</div>
+                    <div class="profile-role">Employee</div>
+                </div>
+                <div class="profile-actions">
+                    <a href="/logout" class="logout-link">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-dashboard">
+        <!-- Top Header Bar -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="page-title">
+                    <h1>Welcome back, {{ session.username }}! 👋</h1>
+                    <p>Here's what's happening with your expenses today</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="header-actions">
+                    <button class="action-btn notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <button class="action-btn search-btn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <div class="quick-add-dropdown">
+                        <a href="/submit_expense" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i>
+                            Quick Add
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-container">
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">
+                                <i class="fas fa-check-circle"></i>
+                                {{ message }}
+                                <button class="flash-close">&times;</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Stats Overview Cards -->
+            <div class="stats-overview">
+                <div class="stat-card-modern">
+                    <div class="stat-header">
+                        <div class="stat-icon stat-blue">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        <div class="stat-menu">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">{{ my_expenses_count }}</h3>
+                        <p class="stat-label">Total Expenses</p>
+                        <div class="stat-trend">
+                            <span class="trend-up">
+                                <i class="fas fa-arrow-up"></i> +12%
+                            </span>
+                            <span class="trend-text">vs last month</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card-modern">
+                    <div class="stat-header">
+                        <div class="stat-icon stat-orange">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-menu">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">{{ pending_count }}</h3>
+                        <p class="stat-label">Pending Approval</p>
+                        <div class="stat-trend">
+                            <span class="trend-down">
+                                <i class="fas fa-arrow-down"></i> -5%
+                            </span>
+                            <span class="trend-text">vs last week</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card-modern">
+                    <div class="stat-header">
+                        <div class="stat-icon stat-green">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-menu">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        {% set approved_expenses = my_expenses|selectattr("status", "equalto", "Approved")|list %}
+                        <h3 class="stat-number">{{ approved_expenses|length }}</h3>
+                        <p class="stat-label">Approved</p>
+                        <div class="stat-trend">
+                            <span class="trend-up">
+                                <i class="fas fa-arrow-up"></i> +8%
+                            </span>
+                            <span class="trend-text">vs last month</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card-modern">
+                    <div class="stat-header">
+                        <div class="stat-icon stat-purple">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-menu">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        {% set total_amount = my_expenses|sum(attribute='amount')|round(2) %}
+                        <h3 class="stat-number">${{ total_amount if total_amount else '0' }}</h3>
+                        <p class="stat-label">Total Amount</p>
+                        <div class="stat-trend">
+                            <span class="trend-up">
+                                <i class="fas fa-arrow-up"></i> +15%
+                            </span>
+                            <span class="trend-text">vs last month</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="main-content-grid">
+                <!-- Quick Actions Card -->
+                <div class="content-card actions-card">
+                    <div class="card-header">
+                        <h2>
+                            <i class="fas fa-bolt"></i>
+                            Quick Actions
+                        </h2>
+                        <p>Common tasks and shortcuts</p>
+                    </div>
+                    
+                    <div class="quick-actions-grid">
+                        <a href="/submit_expense" class="quick-action-item">
+                            <div class="action-icon action-primary">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Add Expense</h4>
+                                <p>Submit new expense report</p>
+                            </div>
+                            <div class="action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </a>
+
+                        <div class="quick-action-item">
+                            <div class="action-icon action-info">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Scan Receipt</h4>
+                                <p>Quick photo capture</p>
+                            </div>
+                            <div class="action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+
+                        <div class="quick-action-item">
+                            <div class="action-icon action-success">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>View History</h4>
+                                <p>Browse past expenses</p>
+                            </div>
+                            <div class="action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+
+                        <div class="quick-action-item">
+                            <div class="action-icon action-warning">
+                                <i class="fas fa-download"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Export Data</h4>
+                                <p>Download reports</p>
+                            </div>
+                            <div class="action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Expenses Card -->
+                <div class="content-card expenses-card">
+                    <div class="card-header">
+                        <h2>
+                            <i class="fas fa-clock"></i>
+                            Recent Expenses
+                        </h2>
+                        <div class="header-actions">
+                            <button class="btn btn-outline btn-sm">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <button class="btn btn-outline btn-sm">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {% if my_expenses %}
+                        <div class="expenses-list">
+                            {% for expense in my_expenses[:5] %}
+                            <div class="expense-item">
+                                <div class="expense-icon">
+                                    <i class="fas fa-receipt"></i>
+                                </div>
+                                <div class="expense-details">
+                                    <div class="expense-title">{{ expense.description }}</div>
+                                    <div class="expense-meta">
+                                        <span class="expense-category">{{ expense.category }}</span>
+                                        <span class="expense-date">{{ expense.date }}</span>
+                                    </div>
+                                </div>
+                                <div class="expense-amount">
+                                    ${{ "%.2f"|format(expense.amount) }}
+                                </div>
+                                <div class="expense-status">
+                                    <span class="status-badge status-{{ expense.status.lower() }}">
+                                        {{ expense.status }}
+                                    </span>
+                                </div>
+                                <div class="expense-actions">
+                                    <button class="action-btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="action-btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="card-footer">
+                            <a href="#" class="view-all-link">
+                                View all expenses <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-receipt"></i>
+                            </div>
+                            <h3>No expenses yet</h3>
+                            <p>Start by adding your first expense report</p>
+                            <a href="/submit_expense" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add First Expense
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Monthly Chart Card -->
+                <div class="content-card chart-card">
+                    <div class="card-header">
+                        <h2>
+                            <i class="fas fa-chart-line"></i>
+                            Monthly Spending
+                        </h2>
+                        <div class="header-actions">
+                            <select class="form-select-sm">
+                                <option>Last 6 months</option>
+                                <option>Last year</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-bar"></i>
+                            <p>Chart visualization would be here</p>
+                            <small>Monthly expense trends and analytics</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Card -->
+                <div class="content-card activity-card">
+                    <div class="card-header">
+                        <h2>
+                            <i class="fas fa-bell"></i>
+                            Recent Activity
+                        </h2>
+                    </div>
+                    
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon activity-success">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p><strong>Expense approved</strong></p>
+                                <p>Coffee meeting expense was approved</p>
+                                <span class="activity-time">2 hours ago</span>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-icon activity-info">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p><strong>New expense added</strong></p>
+                                <p>Lunch expense submitted for review</p>
+                                <span class="activity-time">4 hours ago</span>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-icon activity-warning">
+                                <i class="fas fa-exclamation"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p><strong>Action required</strong></p>
+                                <p>Please add receipt to travel expense</p>
+                                <span class="activity-time">1 day ago</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <a href="#" class="view-all-link">
+                            View all activity <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Sidebar and mobile functionality
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        const overlay = document.getElementById('mobileOverlay');
+
+        // Toggle collapsed state
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+
+        // Mobile functionality
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('active');
+            });
+        }
+
+        // Close sidebar when clicking overlay
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+        });
+
+        // Auto-hide mobile menu when clicking links
+        const menuLinks = sidebar.querySelectorAll('.menu-link');
+        menuLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+
+        // Flash message close functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('flash-close')) {
+                e.target.parentElement.style.display = 'none';
+            }
+        });
+
+        // Animation for stat cards
+        const observeElements = () => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+
+            document.querySelectorAll('.stat-card-modern, .content-card').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'all 0.6s ease';
+                observer.observe(el);
+            });
+        };
+
+        // Initialize animations when page loads
+        document.addEventListener('DOMContentLoaded', observeElements);
+    </script>
+</body>
+</html>

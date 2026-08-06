@@ -2,188 +2,738 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="Admin Dashboard - Manage users and expenses">
+    <meta name="theme-color" content="#3b82f6">
     <title>Admin Dashboard | ExpenseFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+<body class="dashboard-body">
+    <!-- Skip to main content -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
     <div class="dashboard-container">
-        <!-- Header -->
-        <header class="dashboard-header">
-            <div class="header-content">
-                <div class="logo">
-                    <i class="fas fa-receipt"></i>
-                    <span>ExpenseFlow</span>
-                </div>
-                <div class="user-info">
-                    <div class="user-avatar">A</div>
-                    <div>
-                        <div>Admin User</div>
-                        <div style="font-size: 12px; color: var(--gray);">Administrator</div>
+        <!-- Modern Sidebar Navigation -->
+        <nav class="modern-sidebar" id="sidebar" aria-label="Main navigation">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <div class="logo-icon" aria-hidden="true">
+                        <i class="fas fa-receipt"></i>
                     </div>
-                    <a href="/logout" class="logout-btn">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
+                    <span class="logo-text">ExpenseFlow</span>
                 </div>
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar" aria-expanded="true">
+                    <i class="fas fa-bars" aria-hidden="true"></i>
+                </button>
             </div>
-        </header>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <div class="content-header">
-                <h1>Admin Dashboard</h1>
-                <p>Manage users and monitor expenses across your organization</p>
-            </div>
-
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <!-- Quick Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon blue">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-value">{{ users|length }}</div>
-                        <div class="stat-label">Total Users</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon green">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-value">{{ expenses|length }}</div>
-                        <div class="stat-label">Total Expenses</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon orange">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stat-info">
-                        {% set pending_expenses = [] %}
-                        {% for expense in expenses %}
-                            {% if expense.status == 'Pending' %}
-                                {% set _ = pending_expenses.append(expense) %}
-                            {% endif %}
-                        {% endfor %}
-                        <div class="stat-value">{{ pending_expenses|length }}</div>
-                        <div class="stat-label">Pending Approvals</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon purple">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="stat-info">
-                        {% set approved_expenses = [] %}
-                        {% for expense in expenses %}
-                            {% if expense.status == 'Approved' %}
-                                {% set _ = approved_expenses.append(expense) %}
-                            {% endif %}
-                        {% endfor %}
-                        <div class="stat-value">{{ approved_expenses|length }}</div>
-                        <div class="stat-label">Approved Expenses</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Users Section -->
-            <div class="section-card">
-                <div class="section-header">
-                    <h2>User Management</h2>
-                    <a href="/manage_users" class="btn btn-primary">
-                        <i class="fas fa-user-plus"></i> Add User
-                    </a>
+            
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <span class="menu-title">ADMIN</span>
+                    <ul class="menu-items">
+                        <li class="menu-item active">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="/manage_users" class="menu-link">
+                                <i class="fas fa-users"></i>
+                                <span>User Management</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                                <span>All Expenses</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Analytics</span>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
                 
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Username</th>
-                                <th>Role</th>
-                                <th>Manager ID</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for u in users %}
-                            <tr>
-                                <td>{{ u.id }}</td>
-                                <td>
-                                    <div class="user-cell">
-                                        <div class="user-avatar-small">{{ u.username[0]|upper }}</div>
-                                        {{ u.username }}
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="role-badge {{ u.role|lower }}">{{ u.role }}</span>
-                                </td>
-                                <td>{{ u.manager_id if u.manager_id else '-' }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="menu-section">
+                    <span class="menu-title">REPORTS</span>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-download"></i>
+                                <span>Export Data</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-audit"></i>
+                                <span>Audit Logs</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="menu-section">
+                    <span class="menu-title">SETTINGS</span>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-cog"></i>
+                                <span>System Settings</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Security</span>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
             </div>
-
-            <!-- Expenses Section -->
-            <div class="section-card">
-                <div class="section-header">
-                    <h2>Expense Overview</h2>
-                    <div class="header-actions">
-                        <a href="/view_expenses" class="btn btn-outline">
-                            <i class="fas fa-eye"></i> View All Expenses
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="profile-avatar admin-avatar">
+                        <span>A</span>
+                    </div>
+                    <div class="profile-info">
+                        <div class="profile-name">Admin User</div>
+                        <div class="profile-role">Administrator</div>
+                    </div>
+                    <div class="profile-actions">
+                        <a href="/logout" class="logout-link">
+                            <i class="fas fa-sign-out-alt"></i>
                         </a>
                     </div>
                 </div>
-                
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>User</th>
-                                <th>Amount</th>
-                                <th>Currency</th>
-                                <th>Category</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for e in expenses %}
-                            <tr>
-                                <td>{{ e.id }}</td>
-                                <td>{{ e.username }}</td>
-                                <td class="amount-cell">${{ e.amount }}</td>
-                                <td>
-                                    <span class="currency-badge">{{ e.currency }}</span>
-                                </td>
-                                <td>
-                                    <span class="category-tag">{{ e.category }}</span>
-                                </td>
-                                <td>
-                                    <span class="status-badge {{ e.status|lower }}">{{ e.status }}</span>
-                                </td>
-                                <td>{{ e.date }}</td>
-                            </tr>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-dashboard" id="main-content">
+            <!-- Top Header Bar -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open mobile menu">
+                        <i class="fas fa-bars" aria-hidden="true"></i>
+                    </button>
+                    <div class="page-title">
+                        <h1>Admin Dashboard 👑</h1>
+                        <p>Monitor and manage your organization's expense ecosystem</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-actions">
+                        <button class="action-btn notification-btn" aria-label="Notifications (5 unread)">
+                            <i class="fas fa-bell" aria-hidden="true"></i>
+                            <span class="notification-badge" aria-label="5 notifications">5</span>
+                        </button>
+                        <button class="action-btn search-btn" aria-label="Search">
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                        </button>
+                        <div class="admin-tools-dropdown">
+                            <a href="/manage_users" class="btn btn-primary btn-sm">
+                                <i class="fas fa-tools" aria-hidden="true"></i>
+                                Admin Tools
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-container" role="alert" aria-live="polite">
+                            {% for category, message in messages %}
+                                <div class="flash-message {{ category }} fade-in">
+                                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %}" aria-hidden="true"></i>
+                                    {{ message }}
+                                    <button class="flash-close" aria-label="Close message">&times;</button>
+                                </div>
                             {% endfor %}
-                        </tbody>
-                    </table>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Key Metrics Overview -->
+                <div class="stats-overview">
+                    <div class="stat-card-modern">
+                        <div class="stat-header">
+                            <div class="stat-icon stat-blue">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-menu">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number">{{ users|length }}</h3>
+                            <p class="stat-label">Total Users</p>
+                            <div class="stat-trend">
+                                <span class="trend-up">
+                                    <i class="fas fa-arrow-up"></i> +5
+                                </span>
+                                <span class="trend-text">this month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-modern">
+                        <div class="stat-header">
+                            <div class="stat-icon stat-purple">
+                                <i class="fas fa-receipt"></i>
+                            </div>
+                            <div class="stat-menu">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number">{{ expenses|length }}</h3>
+                            <p class="stat-label">Total Expenses</p>
+                            <div class="stat-trend">
+                                <span class="trend-up">
+                                    <i class="fas fa-arrow-up"></i> +12%
+                                </span>
+                                <span class="trend-text">vs last month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-modern">
+                        <div class="stat-header">
+                            <div class="stat-icon stat-orange">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-menu">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            {% set pending = expenses|selectattr("status", "equalto", "Pending")|list %}
+                            <h3 class="stat-number">{{ pending|length }}</h3>
+                            <p class="stat-label">Pending Review</p>
+                            <div class="stat-trend">
+                                <span class="trend-text">
+                                    <i class="fas fa-exclamation-triangle"></i> Needs attention
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-modern">
+                        <div class="stat-header">
+                            <div class="stat-icon stat-green">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="stat-menu">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            {% set total = expenses|sum(attribute='amount')|default(0) %}
+                            <h3 class="stat-number">${{ "%.0f"|format(total/1000) }}K</h3>
+                            <p class="stat-label">Total Amount</p>
+                            <div class="stat-trend">
+                                <span class="trend-down">
+                                    <i class="fas fa-arrow-down"></i> -2%
+                                </span>
+                                <span class="trend-text">vs last month</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Grid -->
+                <div class="content-grid">
+                    <!-- Quick Actions Panel -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-rocket"></i> Quick Actions</h2>
+                        </div>
+                        
+                        <div class="quick-actions-grid">
+                            <a href="/manage_users" class="quick-action-item">
+                                <div class="action-icon">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h4>Add User</h4>
+                                    <p>Create new account</p>
+                                </div>
+                            </a>
+
+                            <a href="#" class="quick-action-item">
+                                <div class="action-icon">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h4>Export Data</h4>
+                                    <p>Download reports</p>
+                                </div>
+                            </a>
+
+                            <a href="#" class="quick-action-item">
+                                <div class="action-icon">
+                                    <i class="fas fa-cog"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h4>Settings</h4>
+                                    <p>System config</p>
+                                </div>
+                            </a>
+
+                            <a href="#" class="quick-action-item">
+                                <div class="action-icon">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h4>Notifications</h4>
+                                    <p>Send alerts</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- System Health -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-heart"></i> System Status</h2>
+                            <span class="badge badge-success">
+                                <span class="status-dot"></span> All systems operational
+                            </span>
+                        </div>
+                        
+                        <div class="system-stats">
+                            <div class="system-stat-item">
+                                <div class="stat-info">
+                                    <span class="stat-name">Server Uptime</span>
+                                    <span class="stat-value">99.9%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 99.9%; background: var(--gradient-success);"></div>
+                                </div>
+                            </div>
+
+                            <div class="system-stat-item">
+                                <div class="stat-info">
+                                    <span class="stat-name">Active Users</span>
+                                    <span class="stat-value">{{ users|length }}/{{ users|length }}</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 100%; background: var(--gradient-primary);"></div>
+                                </div>
+                            </div>
+
+                            <div class="system-stat-item">
+                                <div class="stat-info">
+                                    <span class="stat-name">Processing Speed</span>
+                                    <span class="stat-value">Fast</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 85%; background: var(--gradient-warning);"></div>
+                                </div>
+                            </div>
+
+                            <div class="system-stat-item">
+                                <div class="stat-info">
+                                    <span class="stat-name">Database Performance</span>
+                                    <span class="stat-value">Excellent</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 95%; background: var(--gradient-success);"></div>
+                                </div>
+                            </div>
+
+                            <div class="system-stat-item">
+                                <div class="stat-info">
+                                    <span class="stat-name">Storage Usage</span>
+                                    <span class="stat-value">67%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 67%; background: var(--gradient-warning);"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Tables Section -->
+                <div class="tables-section">
+                    <!-- Recent Users -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-users"></i> Recent Users</h2>
+                            <div class="header-actions">
+                                <a href="/manage_users" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> Add User
+                                </a>
+                            </div>
+                        </div>
+                        
+                        {% if users %}
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Role</th>
+                                            <th>Department</th>
+                                            <th>Last Active</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user in users[:5] %}
+                                        <tr>
+                                            <td>
+                                                <div class="user-cell">
+                                                    <div class="user-avatar-small">
+                                                        {{ user.username[0].upper() }}
+                                                    </div>
+                                                    <div>
+                                                        <div class="user-name">{{ user.username }}</div>
+                                                        <div class="user-email">{{ user.username }}@company.com</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="role-badge {{ user.role.lower() }}">
+                                                    {{ user.role }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="department-tag">Finance</span>
+                                            </td>
+                                            <td>
+                                                <span class="time-ago">2 hours ago</span>
+                                            </td>
+                                            <td>
+                                                <span class="status-badge status-active">Active</span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Recent Expenses -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-receipt"></i> Recent Expenses</h2>
+                            <div class="header-actions">
+                                <button class="btn btn-outline btn-sm">
+                                    <i class="fas fa-filter"></i> Filter
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {% if expenses %}
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Employee</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                            <th>Category</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for expense in expenses[:5] %}
+                                        <tr>
+                                            <td>
+                                                <div class="user-cell">
+                                                    <div class="user-avatar-small">
+                                                        {{ expense.username[0].upper() }}
+                                                    </div>
+                                                    <span>{{ expense.username }}</span>
+                                                </div>
+                                            </td>
+                                            <td>{{ expense.description }}</td>
+                                            <td>
+                                                <span class="amount-cell">${{ "%.2f"|format(expense.amount) }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="category-tag">{{ expense.category }}</span>
+                                            </td>
+                                            <td>{{ expense.date }}</td>
+                                            <td>
+                                                <span class="status-badge status-{{ expense.status.lower() }}">
+                                                    {{ expense.status }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="table-actions">
+                                                    <button class="action-btn-sm" title="Approve" onclick="approveExpense({{ expense.id }}, '{{ expense.username }}', {{ expense.amount }})">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                    <button class="action-btn-sm" title="Reject" onclick="rejectExpense({{ expense.id }}, '{{ expense.username }}')">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                    <button class="action-btn-sm" title="View" onclick="viewExpense({{ expense.id }})">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- All Users Table -->
+                <div class="content-card full-width">
+                    <div class="card-header">
+                        <h2><i class="fas fa-users-cog"></i> All Users</h2>
+                        <div class="header-actions">
+                            <a href="/manage_users" class="btn btn-primary btn-sm">
+                                <i class="fas fa-user-plus"></i> Add User
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Manager ID</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for u in users %}
+                                <tr>
+                                    <td>{{ u.id }}</td>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="user-avatar-small">{{ u.username[0]|upper }}</div>
+                                            <span>{{ u.username }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="role-badge {{ u.role|lower }}">{{ u.role }}</span>
+                                    </td>
+                                    <td>{{ u.manager_id if u.manager_id else '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- All Expenses Table -->
+                <div class="content-card full-width">
+                    <div class="card-header">
+                        <h2><i class="fas fa-file-invoice-dollar"></i> All Expenses</h2>
+                        <div class="header-actions">
+                            <button class="btn btn-outline btn-sm">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <button class="btn btn-outline btn-sm">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>User</th>
+                                    <th>Amount</th>
+                                    <th>Currency</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for e in expenses %}
+                                <tr>
+                                    <td>{{ e.id }}</td>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="user-avatar-small">{{ e.username[0]|upper }}</div>
+                                            <span>{{ e.username }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="amount-cell">
+                                        <strong>${{ "%.2f"|format(e.amount) }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="currency-badge">{{ e.currency }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="category-badge category-{{ e.category|lower }}">{{ e.category }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge {{ e.status|lower }}">
+                                            <i class="fas fa-{% if e.status == 'Approved' %}check{% elif e.status == 'Pending' %}clock{% else %}times{% endif %}"></i>
+                                            {{ e.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ e.date }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
+        </main>
+
+        <!-- Mobile Overlay -->
+        <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true"></div>
     </div>
+
+    <!-- Enhanced UI/UX JavaScript -->
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <script>
+        // Sidebar toggle functionality
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.querySelector('.modern-sidebar');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+
+        // Desktop sidebar toggle
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            this.setAttribute('aria-expanded', !sidebar.classList.contains('collapsed'));
+        });
+
+        // Mobile menu toggle
+        mobileMenuBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('mobile-open');
+            mobileOverlay.classList.toggle('active');
+            this.setAttribute('aria-expanded', sidebar.classList.contains('mobile-open'));
+        });
+
+        // Mobile overlay click
+        mobileOverlay.addEventListener('click', function() {
+            sidebar.classList.remove('mobile-open');
+            this.classList.remove('active');
+            mobileMenuBtn.setAttribute('aria-expanded', 'false');
+        });
+
+        // Flash message close functionality
+        document.querySelectorAll('.flash-close').forEach(button => {
+            button.addEventListener('click', function() {
+                this.parentElement.style.display = 'none';
+            });
+        });
+
+        // Additional admin dashboard initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Admin Dashboard initialized successfully');
+        });
+
+        // Expense Action Functions
+        function approveExpense(expenseId, username, amount) {
+            if (confirm(`Approve expense of $${amount} for ${username}?`)) {
+                fetch('/approve_expense', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        expense_id: expenseId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Expense approved successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to approve expense');
+                });
+            }
+        }
+
+        function rejectExpense(expenseId, username) {
+            const reason = prompt(`Enter reason for rejecting ${username}'s expense:`);
+            if (reason) {
+                fetch('/reject_expense', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        expense_id: expenseId,
+                        reason: reason
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Expense rejected successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to reject expense');
+                });
+            }
+        }
+
+        function viewExpense(expenseId) {
+            fetch(`/get_expense/${expenseId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const expense = data.expense;
+                        const details = `
+Expense Details:
+━━━━━━━━━━━━━━━━━━
+ID: ${expense.id}
+Employee: ${expense.username}
+Amount: $${expense.amount} ${expense.currency}
+Category: ${expense.category}
+Description: ${expense.description}
+Date: ${expense.date}
+Status: ${expense.status}
+Vendor: ${expense.vendor_name || 'N/A'}
+                        `;
+                        alert(details);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to load expense details');
+                });
+        }
+    </script>
 </body>
 </html>

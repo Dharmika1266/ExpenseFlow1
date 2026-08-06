@@ -2,108 +2,326 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="Manage Users - Add and manage employees and managers">
+    <meta name="theme-color" content="#3b82f6">
     <title>Manage Users | ExpenseFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+<body class="dashboard-body">
+    <!-- Skip to main content -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
     <div class="dashboard-container">
-        <!-- Header -->
-        <header class="dashboard-header">
-            <div class="header-content">
-                <div class="logo">
-                    <i class="fas fa-receipt"></i>
-                    <span>ExpenseFlow</span>
-                </div>
-                <div class="user-info">
-                    <div class="user-avatar">A</div>
-                    <div>
-                        <div>Admin User</div>
-                        <div style="font-size: 12px; color: var(--gray);">Administrator</div>
+        <!-- Modern Sidebar Navigation -->
+        <nav class="modern-sidebar" id="sidebar" aria-label="Main navigation">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <div class="logo-icon" aria-hidden="true">
+                        <i class="fas fa-receipt"></i>
                     </div>
-                    <a href="/admin_dashboard" class="btn btn-outline">
-                        <i class="fas fa-arrow-left"></i> Back to Dashboard
-                    </a>
-                    <a href="/logout" class="logout-btn">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
+                    <span class="logo-text">ExpenseFlow</span>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar" aria-expanded="true">
+                    <i class="fas fa-bars" aria-hidden="true"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <span class="menu-title">ADMIN</span>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="/admin_dashboard" class="menu-link">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="menu-item active">
+                            <a href="/manage_users" class="menu-link">
+                                <i class="fas fa-users"></i>
+                                <span>User Management</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                                <span>All Expenses</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Analytics</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="menu-section">
+                    <span class="menu-title">REPORTS</span>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-download"></i>
+                                <span>Export Data</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-audit"></i>
+                                <span>Audit Logs</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="menu-section">
+                    <span class="menu-title">SETTINGS</span>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-cog"></i>
+                                <span>System Settings</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="#" class="menu-link">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Security</span>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
             </div>
-        </header>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <div class="content-header">
-                <h1>Manage Users</h1>
-                <p>Add and manage employees and managers in your organization</p>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="profile-avatar admin-avatar">
+                        <span>A</span>
+                    </div>
+                    <div class="profile-info">
+                        <div class="profile-name">Admin User</div>
+                        <div class="profile-role">Administrator</div>
+                    </div>
+                    <div class="profile-actions">
+                        <a href="/logout" class="logout-link">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </a>
+                    </div>
+                </div>
             </div>
+        </nav>
 
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+        <!-- Main Content Area -->
+        <main class="main-dashboard" id="main-content">
+            <!-- Top Header Bar -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open mobile menu">
+                        <i class="fas fa-bars" aria-hidden="true"></i>
+                    </button>
+                    <div class="page-title">
+                        <h1>User Management 👥</h1>
+                        <p>Add and manage employees and managers in your organization</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-actions">
+                        <button class="action-btn notification-btn" aria-label="Notifications">
+                            <i class="fas fa-bell" aria-hidden="true"></i>
+                        </button>
+                        <a href="/admin_dashboard" class="btn btn-outline btn-sm">
+                            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                            Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </header>
 
-            <div class="form-and-table-container">
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-container" role="alert" aria-live="polite">
+                            {% for category, message in messages %}
+                                <div class="flash-message {{ category }} fade-in">
+                                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %}" aria-hidden="true"></i>
+                                    {{ message }}
+                                    <button class="flash-close" aria-label="Close message">&times;</button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <!-- User Statistics -->
+                <div class="stats-overview">
+                    <div class="stat-card-modern">
+                        <div class="stat-header">
+                            <div class="stat-icon stat-blue">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number">{{ users|length }}</h3>
+                            <p class="stat-label">Total Users</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-modern">
+                        <div class="stat-header">
+                            <div class="stat-icon stat-green">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number">{{ managers|length }}</h3>
+                            <p class="stat-label">Managers</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-modern">
+                        <div class="stat-header">
+                            <div class="stat-icon stat-purple">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            {% set employees = users|length - managers|length %}
+                            <h3 class="stat-number">{{ employees }}</h3>
+                            <p class="stat-label">Employees</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-modern">
+                        <div class="stat-header">
+                            <div class="stat-icon stat-orange">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number">+5</h3>
+                            <p class="stat-label">New This Month</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Add User Form -->
-                <div class="section-card">
-                    <div class="section-header">
-                        <h2>Add New User</h2>
-                        <div class="form-icon">
-                            <i class="fas fa-user-plus"></i>
+                <div class="content-card elegant-form-card">
+                    <div class="elegant-form-header">
+                        <div class="form-header-content">
+                            <div class="form-header-left">
+                                <h2><i class="fas fa-user-plus"></i> Add New User</h2>
+                                <p>Fill in the details to create a new user account</p>
+                            </div>
                         </div>
                     </div>
                     
-                    <form method="POST" class="auth-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="username" class="form-label">Username</label>
-                                <input type="text" id="username" name="username" class="form-control" placeholder="Enter username" required>
+                    <form method="POST" class="elegant-form">
+                        <div class="elegant-form-body">
+                            <div class="form-columns">
+                                <!-- Username Field -->
+                                <div class="elegant-field">
+                                    <label for="username" class="elegant-label">
+                                        <i class="fas fa-user"></i>
+                                        <span>Username</span>
+                                        <span class="required-mark">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="username" 
+                                        name="username" 
+                                        class="elegant-input" 
+                                        placeholder="Enter username" 
+                                        required 
+                                        autocomplete="username">
+                                </div>
+                                
+                                <!-- Password Field -->
+                                <div class="elegant-field">
+                                    <label for="password" class="elegant-label">
+                                        <i class="fas fa-lock"></i>
+                                        <span>Password</span>
+                                        <span class="required-mark">*</span>
+                                    </label>
+                                    <div class="password-wrapper">
+                                        <input 
+                                            type="password" 
+                                            id="password" 
+                                            name="password" 
+                                            class="elegant-input" 
+                                            placeholder="Enter password (min. 6 characters)" 
+                                            required 
+                                            autocomplete="new-password">
+                                        <button type="button" class="pwd-toggle" onclick="togglePassword('password')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <div class="form-group">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+
+                            <div class="form-columns">
+                                <!-- Role Field -->
+                                <div class="elegant-field">
+                                    <label for="role" class="elegant-label">
+                                        <i class="fas fa-id-badge"></i>
+                                        <span>User Role</span>
+                                        <span class="required-mark">*</span>
+                                    </label>
+                                    <select id="role" name="role" class="elegant-select" required>
+                                        <option value="" disabled selected>Select a role</option>
+                                        <option value="Employee">Employee</option>
+                                        <option value="Manager">Manager</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Manager Field -->
+                                <div class="elegant-field">
+                                    <label for="manager_id" class="elegant-label">
+                                        <i class="fas fa-user-tie"></i>
+                                        <span>Assign Manager</span>
+                                        <span class="optional-mark">(Optional)</span>
+                                    </label>
+                                    <select id="manager_id" name="manager_id" class="elegant-select">
+                                        <option value="">No Manager</option>
+                                        {% for m in managers %}
+                                            <option value="{{ m.id }}">{{ m.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="role" class="form-label">Role</label>
-                                <select id="role" name="role" class="form-control" required>
-                                    <option value="">Select Role</option>
-                                    <option value="Employee">Employee</option>
-                                    <option value="Manager">Manager</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="manager_id" class="form-label">Manager (Optional)</label>
-                                <select id="manager_id" name="manager_id" class="form-control">
-                                    <option value="">No Manager</option>
-                                    {% for m in managers %}
-                                        <option value="{{ m.id }}">{{ m.username }} (Manager)</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                        <div class="elegant-form-footer">
+                            <button type="reset" class="elegant-btn elegant-btn-reset">
+                                <i class="fas fa-redo"></i>
+                                Reset
+                            </button>
+                            <button type="submit" class="elegant-btn elegant-btn-submit">
+                                <i class="fas fa-check"></i>
+                                Add User
+                            </button>
                         </div>
-
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-user-plus"></i> Add User
-                        </button>
                     </form>
                 </div>
 
                 <!-- Existing Users Table -->
-                <div class="section-card">
-                    <div class="section-header">
-                        <h2>Existing Users ({{ users|length }})</h2>
-                        <div class="table-actions">
-                            <span class="user-count">{{ users|length }} users</span>
+                <div class="content-card full-width">
+                    <div class="card-header">
+                        <h2><i class="fas fa-users-cog"></i> Existing Users ({{ users|length }})</h2>
+                        <div class="header-actions">
+                            <button class="btn btn-outline btn-sm">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <button class="btn btn-outline btn-sm">
+                                <i class="fas fa-download"></i> Export
+                            </button>
                         </div>
                     </div>
                     
@@ -112,9 +330,10 @@
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>Username</th>
+                                    <th>User</th>
                                     <th>Role</th>
                                     <th>Manager</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -125,7 +344,10 @@
                                     <td>
                                         <div class="user-cell">
                                             <div class="user-avatar-small">{{ u.username[0]|upper }}</div>
-                                            {{ u.username }}
+                                            <div>
+                                                <div class="user-name">{{ u.username }}</div>
+                                                <div class="user-email">{{ u.username }}@company.com</div>
+                                            </div>
                                         </div>
                                     </td>
                                     <td>
@@ -151,11 +373,17 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <div class="action-buttons">
-                                            <button class="btn-icon" title="Edit User">
+                                        <span class="status-badge status-active">Active</span>
+                                    </td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="action-btn-sm" title="Edit User" onclick="editUser({{ u.id }}, '{{ u.username }}', '{{ u.role }}', {{ u.manager_id if u.manager_id else 'null' }})">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button class="btn-icon btn-danger" title="Delete User">
+                                            <button class="action-btn-sm" title="View Details" onclick="viewUser({{ u.id }}, '{{ u.username }}', '{{ u.role }}')">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="action-btn-sm btn-danger" title="Delete User" onclick="deleteUser({{ u.id }}, '{{ u.username }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -167,7 +395,392 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
+
+        <!-- Mobile Overlay -->
+        <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true"></div>
     </div>
+
+    <!-- Enhanced UI/UX JavaScript -->
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <script>
+        // Sidebar toggle functionality
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.querySelector('.modern-sidebar');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+
+        // Desktop sidebar toggle
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            this.setAttribute('aria-expanded', !sidebar.classList.contains('collapsed'));
+        });
+
+        // Mobile menu toggle
+        mobileMenuBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('mobile-open');
+            mobileOverlay.classList.toggle('active');
+            this.setAttribute('aria-expanded', sidebar.classList.contains('mobile-open'));
+        });
+
+        // Mobile overlay click
+        mobileOverlay.addEventListener('click', function() {
+            sidebar.classList.remove('mobile-open');
+            this.classList.remove('active');
+            mobileMenuBtn.setAttribute('aria-expanded', 'false');
+        });
+
+        // Flash message close functionality
+        document.querySelectorAll('.flash-close').forEach(button => {
+            button.addEventListener('click', function() {
+                this.parentElement.style.display = 'none';
+            });
+        });
+        
+        // Password toggle function
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const button = event.currentTarget;
+            const icon = button.querySelector('i');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Action button functions
+        let isEditMode = false;
+        let editingUserId = null;
+
+        function editUser(userId, username, role, managerId) {
+            // Switch to edit mode
+            isEditMode = true;
+            editingUserId = userId;
+            
+            // Fill form with user data
+            document.getElementById('username').value = username;
+            document.getElementById('role').value = role;
+            document.getElementById('manager_id').value = managerId || '';
+            
+            // Change button text and appearance
+            const submitBtn = document.querySelector('.elegant-btn-submit');
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Update User';
+            submitBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+            
+            // Add cancel button if not exists
+            if (!document.getElementById('cancelEditBtn')) {
+                const cancelBtn = document.createElement('button');
+                cancelBtn.type = 'button';
+                cancelBtn.id = 'cancelEditBtn';
+                cancelBtn.className = 'elegant-btn elegant-btn-reset';
+                cancelBtn.innerHTML = '<i class="fas fa-times"></i> Cancel Edit';
+                cancelBtn.onclick = cancelEdit;
+                submitBtn.parentElement.insertBefore(cancelBtn, submitBtn);
+            }
+            
+            // Scroll to form
+            document.querySelector('.elegant-form-card').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+            
+            // Focus on username
+            setTimeout(() => {
+                document.getElementById('username').focus();
+            }, 500);
+        }
+        
+        function cancelEdit() {
+            isEditMode = false;
+            editingUserId = null;
+            
+            // Reset form
+            document.querySelector('.elegant-form').reset();
+            
+            // Reset button
+            const submitBtn = document.querySelector('.elegant-btn-submit');
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> Add User';
+            submitBtn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+            
+            // Remove cancel button
+            const cancelBtn = document.getElementById('cancelEditBtn');
+            if (cancelBtn) {
+                cancelBtn.remove();
+            }
+        }
+        
+        function viewUser(userId, username, role) {
+            // Fetch user details from server
+            fetch(`/get_user/${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const user = data.user;
+                        const modal = `
+                            <div style="font-family: monospace; text-align: left;">
+                                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                                <b>USER DETAILS</b>
+                                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                                
+                                👤 User ID: ${user.id}
+                                📝 Username: ${user.username}
+                                🎭 Role: ${user.role}
+                                👔 Manager: ${user.manager_name}
+                                📧 Email: ${user.email}
+                                ✅ Status: Active
+                                
+                                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                            </div>
+                        `;
+                        
+                        // Create custom modal
+                        const modalDiv = document.createElement('div');
+                        modalDiv.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+                        modalDiv.innerHTML = `
+                            <div style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                                ${modal}
+                                <button onclick="this.closest('div[style*=fixed]').remove()" style="width: 100%; margin-top: 20px; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600;">
+                                    Close
+                                </button>
+                            </div>
+                        `;
+                        document.body.appendChild(modalDiv);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Error fetching user details: ' + error);
+                });
+        }
+        
+        function deleteUser(userId, username) {
+            // Confirm deletion
+            const confirmed = confirm(
+                `⚠️ DELETE USER\n\n` +
+                `Are you sure you want to delete user "${username}"?\n\n` +
+                `This will also delete all expenses created by this user.\n\n` +
+                `This action cannot be undone!`
+            );
+            
+            if (confirmed) {
+                // Show loading
+                const deleteBtn = event.currentTarget;
+                const originalHTML = deleteBtn.innerHTML;
+                deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                deleteBtn.disabled = true;
+                
+                // Make API call
+                fetch(`/delete_user/${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.requiresReassignment) {
+                        // This manager has employees - show reassignment modal
+                        deleteBtn.innerHTML = originalHTML;
+                        deleteBtn.disabled = false;
+                        showReassignmentModal(userId, username, data.employees, data.availableManagers);
+                    } else if (data.success) {
+                        // Show success message
+                        alert('✅ ' + data.message);
+                        // Reload page to update table
+                        location.reload();
+                    } else {
+                        alert('❌ Error: ' + data.message);
+                        deleteBtn.innerHTML = originalHTML;
+                        deleteBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    alert('❌ Error deleting user: ' + error);
+                    deleteBtn.innerHTML = originalHTML;
+                    deleteBtn.disabled = false;
+                });
+            }
+        }
+
+        // Show reassignment modal
+        function showReassignmentModal(userId, username, employees, availableManagers) {
+            if (availableManagers.length === 0) {
+                alert('❌ No other managers available. Cannot delete this manager.');
+                return;
+            }
+
+            const employeeList = employees.map(e => `• ${e.username} (${e.role})`).join('\n');
+            const managerOptions = availableManagers.map(m => 
+                `<option value="${m.id}">${m.username} (${m.role})</option>`
+            ).join('');
+
+            const modalHTML = `
+                <div id="reassignModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+                    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                        <h3 style="margin: 0 0 20px 0; color: #2c3e50; font-size: 20px;">
+                            <i class="fas fa-exclamation-triangle" style="color: #f39c12;"></i> Manager Reassignment Required
+                        </h3>
+                        <p style="margin-bottom: 15px; color: #555;">
+                            <strong>${username}</strong> is currently managing the following employees:
+                        </p>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; max-height: 150px; overflow-y: auto;">
+                            <pre style="margin: 0; font-family: 'Inter', sans-serif; white-space: pre-wrap;">${employeeList}</pre>
+                        </div>
+                        <p style="margin-bottom: 15px; color: #555;">
+                            <strong>Please select a new manager</strong> to assign these employees to:
+                        </p>
+                        <select id="newManagerSelect" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
+                            <option value="">-- Select Manager --</option>
+                            ${managerOptions}
+                        </select>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button onclick="closeReassignModal()" style="padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                            <button onclick="confirmReassignment(${userId}, '${username}')" style="padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                                <i class="fas fa-check"></i> Reassign & Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // Close reassignment modal
+        function closeReassignModal() {
+            const modal = document.getElementById('reassignModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Confirm reassignment and proceed with deletion
+        function confirmReassignment(userId, username) {
+            const newManagerId = document.getElementById('newManagerSelect').value;
+            
+            if (!newManagerId) {
+                alert('❌ Please select a manager');
+                return;
+            }
+
+            const modal = document.getElementById('reassignModal');
+            const btn = event.currentTarget;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            btn.disabled = true;
+
+            fetch(`/reassign_and_delete/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    new_manager_id: parseInt(newManagerId)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + data.message);
+                    btn.innerHTML = '<i class="fas fa-check"></i> Reassign & Delete';
+                    btn.disabled = false;
+                }
+            })
+            .catch(error => {
+                alert('❌ Error: ' + error);
+                btn.innerHTML = '<i class="fas fa-check"></i> Reassign & Delete';
+                btn.disabled = false;
+            });
+        }
+
+        // Update form submission to handle both create and update
+        const form = document.querySelector('.elegant-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+                const role = document.getElementById('role').value;
+                const managerId = document.getElementById('manager_id').value;
+
+                if (!username || !role) {
+                    alert('❌ Please fill in all required fields');
+                    return false;
+                }
+
+                if (!isEditMode && password.length < 6) {
+                    alert('❌ Password must be at least 6 characters long');
+                    return false;
+                }
+                
+                if (isEditMode) {
+                    // Update existing user
+                    const submitBtn = this.querySelector('.elegant-btn-submit');
+                    const originalHTML = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+                    submitBtn.disabled = true;
+                    
+                    fetch(`/update_user/${editingUserId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            username: username,
+                            password: password || null,
+                            role: role,
+                            manager_id: managerId || null
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('✅ ' + data.message);
+                            location.reload();
+                        } else {
+                            alert('❌ Error: ' + data.message);
+                            submitBtn.innerHTML = originalHTML;
+                            submitBtn.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        alert('❌ Error updating user: ' + error);
+                        submitBtn.innerHTML = originalHTML;
+                        submitBtn.disabled = false;
+                    });
+                } else {
+                    // Create new user (submit form normally)
+                    this.submit();
+                }
+            });
+        }
+
+        // Additional page initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Manage Users page initialized successfully');
+            
+            // Add hover effects to action buttons
+            document.querySelectorAll('.action-btn-sm').forEach(btn => {
+                btn.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.1)';
+                });
+                btn.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+        });
+    </script>
 </body>
 </html>

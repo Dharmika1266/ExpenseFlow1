@@ -1,0 +1,40 @@
+.env
+.env.*
+
+# Virtual environments
+env/
+.venv/
+venv/
+ENV/
+
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+
+# Flask / runtime artifacts
+instance/
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Packaging / build output
+build/
+dist/
+*.egg-info/
+
+# Coverage and logs
+.coverage
+.coverage.*
+htmlcov/
+*.log
+
+# Editor / OS files
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
