@@ -28,13 +28,11 @@ Our solution provides:
 ### 👑 Team Leader  
 - **Name:** Rishi  
 - **Email:** rishiginoya.it23d1@scet.ac.in  
-- **Phone:** +91 96249 54426  
 - **Passing Year:** 2027  
 
 ### 👥 Team Members  
 - **Member 1:** Dharmika  
   - **Email:** gajeradharmika1206@gmail.com  
-  - **Phone:** +91 94845 17275  
   - **Passing Year:** 2027  
 
 ---
